@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AcousticGalaxyM16-3 – 3D Music Galaxy</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text x='4' y='25' font-size='24' fill='%2338e8ff'>◈</text></svg>">
+<link rel="stylesheet" href="style.css?v=18">
+</head>
+<body>
+<div id="scene"></div>
+<div id="labels"></div>
+<div id="starlabels"></div>
+<svg id="leader" class="leader" aria-hidden="true">
+  <line id="leader-line" x1="0" y1="0" x2="0" y2="0"></line>
+  <circle id="leader-dot" cx="0" cy="0" r="3.2"></circle>
+</svg>
+<div class="startag" id="startag">
+  <div class="st-head">
+    <div class="st-cover" id="st-cover">
+      <img id="st-cover-img" alt="">
+      <span>◈</span>
+    </div>
+    <div class="st-headtext">
+      <div class="st-title" id="st-title"></div>
+      <div class="st-sub" id="st-sub"></div>
+    </div>
+    <button class="st-fav" id="st-fav" title="Als Fixstern merken">☆</button>
+  </div>
+  <div class="st-lyrics" id="st-lyrics"></div>
+</div>
+<div class="vignette"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">◈</span>
+    <span class="title">AcousticGalaxyM16-3</span>
+    <span class="sub">3D MUSIC GALAXY</span>
+  </div>
+  <div class="controls">
+    <div class="searchbox" id="searchbox">
+      <input id="search" type="text" placeholder="Suche Titel, Künstler, Album…" spellcheck="false" autocomplete="off">
+      <button id="search-clear" title="Suche löschen" aria-label="Suche löschen">✕</button>
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <span class="chip" id="status">Initialisiere…</span>
+    <button id="btn-spin" class="toggle on" title="Galaxie dreht sich">Drehung</button>
+    <button id="btn-labels" class="toggle on" title="Regionen-Namen">Labels</button>
+    <button id="btn-regions" class="toggle on" title="Regionen-Fenster">Regionen</button>
+    <button id="btn-paths">Pfade</button>
+    <button id="btn-landscape">Landschaft</button>
+    <button id="btn-scan">Scan</button>
+  </div>
+</header>
+
+<aside class="legend" id="legend"></aside>
+
+<div class="viewctl">
+  <button id="btn-zoom-in" title="Zoom +">+</button>
+  <button id="btn-zoom-out" title="Zoom −">−</button>
+  <button id="btn-reset" title="Ansicht zurücksetzen">⌂</button>
+</div>
+
+<div class="hint" id="hint">Ziehen: drehen &nbsp;·&nbsp; Mausrad / Pinch: Zoom &nbsp;·&nbsp; Rechtsklick: verschieben &nbsp;·&nbsp; Klick auf Stern: abspielen</div>
+<div class="tooltip" id="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Pfad-Auswahl -->
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h2>Zu durchsuchende Pfade</h2>
+    <button class="iconbtn" id="drawer-close">✕</button>
+  </div>
+  <div class="drawer-sub root-row">
+    <label for="root-input">Wurzel</label>
+    <input id="root-input" type="text" spellcheck="false" placeholder="/pfad/zur/musik">
+    <button id="btn-root" title="Neuen Musikordner laden">Laden</button>
+  </div>
+  <div class="path-list" id="path-list"></div>
+  <div class="drawer-foot">
+    <button id="btn-all">Alle</button>
+    <button id="btn-none">Keine</button>
+    <button id="btn-apply" class="primary">Übernehmen &amp; scannen</button>
+  </div>
+</div>
+
+<!-- Detail -->
+<section class="detail" id="detail">
+  <button class="detail-toggle" id="detail-toggle" title="ein-/ausklappen">▾</button>
+  <div class="detail-resize" id="detail-resize" title="Größe verstellen (Doppelklick = Standard)"></div>
+  <div class="detail-body" id="detail-body">
+    <div class="detail-top">
+      <div class="cover" id="d-cover">
+        <img id="d-cover-img" alt="">
+        <span class="cover-ph">◈</span>
+      </div>
+      <div class="detail-main">
+        <h2 id="d-name">Klicke einen Stern</h2>
+        <div class="d-artist" id="d-artist" role="button"></div>
+        <div class="d-album" id="d-album" role="button"></div>
+        <div class="meta">
+          <span class="pill" id="d-genre" style="display:none"></span>
+          <span class="pill" id="d-tempo">– BPM</span>
+          <span class="pill" id="d-key">–</span>
+          <span class="pill" id="d-dur">–</span>
+          <button class="pill fav-toggle" id="d-fav" title="Als Fixstern merken">☆ Fixstern</button>
+        </div>
+      </div>
+    </div>
+    <audio id="audio" controls src=""></audio>
+    <div class="detail-sim">
+      <h3 id="sim-title">Ähnlich</h3>
+      <div id="similar" class="sim-list"></div>
+    </div>
+  </div>
+</section>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="app.js?v=18"></script>
+</body>
+</html>
