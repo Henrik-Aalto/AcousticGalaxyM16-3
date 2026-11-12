@@ -4,6 +4,8 @@ Deine lokale Musikbibliothek als interaktive 3D-Galaxie: Jeder Titel wird zu ein
 Stern, ähnliche Stücke ziehen sich an, und Regionen tragen die Namen ihrer
 prägenden Interpreten. Gebaut mit FastAPI, librosa, UMAP und three.js.
 
+![AcousticGalaxyM16-3 – 3D-Galaxie der Musikbibliothek](docs/galaxy.png)
+
 ## Funktionen
 
 - **3D-Galaxie** aller Titel im Browser (three.js, OrbitControls)
@@ -114,6 +116,7 @@ static/
   app.js             three.js-Galaxie und Interaktion
   style.css          Styling
   vendor/            three.js und OrbitControls (MIT)
+docs/galaxy.png      Screenshot der Galaxie
 version.sh           erstellt Quellcode-Snapshots unter versions/
 cache/               Analyse-Cache (nicht im Repo)
 ```
