@@ -77,6 +77,13 @@ Zusätzlich lassen sich Umgebungsvariablen nutzen:
 | `ACOUSTI_MATCH_HOST` | `127.0.0.1` |
 | `ACOUSTI_MATCH_PORT` | `8000` |
 
+## Nextcloud-App (AppAPI)
+
+Unter `nextcloud/` liegt eine ExApp-Variante, die die Bibliothek der
+Nextcloud **Music**-App nutzt (Subsonic-API, Favoriten als Fixsterne).
+Voraussetzungen, Image-Build und Registrierung stehen in
+[`nextcloud/README.md`](nextcloud/README.md).
+
 ## Wie es funktioniert
 
 1. **Scan** sammelt alle Audiodateien der gewählten Ordner.
@@ -118,6 +125,7 @@ static/
   vendor/            three.js und OrbitControls (MIT)
 docs/galaxy.png      Screenshot der Galaxie
 version.sh           erstellt Quellcode-Snapshots unter versions/
+nextcloud/           ExApp-Variante für die Nextcloud Music-App
 cache/               Analyse-Cache (nicht im Repo)
 ```
 
@@ -125,7 +133,8 @@ cache/               Analyse-Cache (nicht im Repo)
 
 - Die erste Analyse einer großen Bibliothek dauert einige Minuten; danach greift
   der Cache in `cache/database.json`.
-- Favoriten („Fixsterne“) werden nur lokal im Browser gespeichert.
+- Favoriten („Fixsterne“) liegen in der Standalone-Version im Browser; die
+  Nextcloud-Variante speichert sie in der Music-App.
 - `versions/` und `cache/` sind per `.gitignore` ausgeschlossen.
 
 ## Lizenz

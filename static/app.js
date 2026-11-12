@@ -7,6 +7,13 @@ const DIST_MAX = 950;
 const HOME_POS = new THREE.Vector3(0, 115, 385);
 const FOCUS_MS = 16000;
 
+/* Im Nextcloud-Betrieb liegt die App unter /index.php/apps/<id>/ */
+const API_BASE = (() => {
+  const m = window.location.pathname.match(/^(.*\/apps\/[^/]+)(?:\/.*)?$/);
+  return m ? m[1] + '/' : '/';
+})();
+function api(path) { return API_BASE + String(path).replace(/^\//, ''); }
+
 /* ================= Zustand ================= */
 let renderer, scene, camera, controls;
 let corona = null, coronaCore = null, coronaLayers = [];
@@ -38,6 +45,7 @@ const LS = 'agm163.';
 })();
 
 let favorites = loadFavorites();
+let favServer = false;
 let favObj = null, pathsGroup = null;
 let starLabelSlots = [], starLabelNext = 0;
 let playlistMode = 'similar', collection = null, collectionObj = null, holdTarget = null;
@@ -126,6 +134,72 @@ function saveFavorites() {
   try { localStorage.setItem(LS + 'favorites', JSON.stringify([...favorites])); } catch (_) { /* egal */ }
 }
 
+/* ================= Nextcloud-Anbindung ================= */
+async function initServerFeatures() {
+  try {
+    const res = await fetch(api('/api/settings'));
+    if (!res.ok) return;
+    const cfg = await res.json();
+    document.body.classList.add('nextcloud');
+    const pathsBtn = $('btn-paths');
+    if (pathsBtn) pathsBtn.style.display = 'none';
+    const musicBtn = $('btn-music');
+    if (musicBtn) musicBtn.style.display = '';
+    favServer = true;
+    try {
+      const r = await fetch(api('/api/favorites'));
+      if (r.ok) {
+        const d = await r.json();
+        if (Array.isArray(d.ids)) {
+          favorites = new Set(d.ids);
+          saveFavorites();
+          refreshFavStars();
+        }
+      }
+    } catch (_) { /* egal */ }
+    if (!cfg.has_key) openNcSetup();
+  } catch (_) { /* Standalone: kein /api/settings */ }
+}
+
+function openNcSetup() {
+  const d = $('nc-drawer'), s = $('nc-scrim');
+  if (d) d.classList.add('open');
+  if (s) s.classList.add('show');
+  const st = $('nc-status');
+  if (st) st.textContent = '';
+}
+
+function closeNcSetup() {
+  const d = $('nc-drawer'), s = $('nc-scrim');
+  if (d) d.classList.remove('open');
+  if (s) s.classList.remove('show');
+}
+
+async function saveNcSetup() {
+  const keyInput = $('nc-key');
+  const status = $('nc-status');
+  const key = ((keyInput && keyInput.value) || '').trim();
+  if (!key) {
+    if (status) status.textContent = 'Bitte den API-Key aus der Music-App einfügen.';
+    return;
+  }
+  if (status) status.textContent = 'Speichere …';
+  try {
+    const res = await fetch(api('/api/settings'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (keyInput) keyInput.value = '';
+    closeNcSetup();
+    toast('Music verbunden, Analyse startet');
+    loadStatusAndPoll();
+  } catch (_) {
+    if (status) status.textContent = 'Speichern fehlgeschlagen.';
+  }
+}
+
 function setFavBtn(btn, on, label) {
   btn.textContent = (on ? '★' : '☆') + (label ? ' ' + label : '');
   btn.classList.toggle('on', on);
@@ -133,8 +207,16 @@ function setFavBtn(btn, on, label) {
 }
 
 function toggleFav(id) {
-  if (favorites.has(id)) favorites.delete(id); else favorites.add(id);
+  const on = !favorites.has(id);
+  if (on) favorites.add(id); else favorites.delete(id);
   saveFavorites();
+  if (favServer) {
+    fetch(api('/api/favorites/' + encodeURIComponent(id)), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ on })
+    }).catch(() => {});
+  }
   refreshFavStars();
   document.querySelectorAll('.sim-fav').forEach((b) => {
     if (b.dataset.id === id) setFavBtn(b, favorites.has(id));
@@ -178,7 +260,7 @@ function refreshFavStars() {
 function setCover(id) {
   const box = $('d-cover');
   const img = $('d-cover-img');
-  const want = '/api/cover/' + encodeURI(id);
+  const want = api('/api/cover/' + encodeURI(id));
   if (img.dataset.want === want) return;
   img.dataset.want = want;
   box.classList.remove('has');
@@ -190,7 +272,7 @@ function setCover(id) {
 function setTagCover(id) {
   const box = $('st-cover');
   const img = $('st-cover-img');
-  const want = '/api/cover/' + encodeURI(id);
+  const want = api('/api/cover/' + encodeURI(id));
   if (img.dataset.want === want) return;
   img.dataset.want = want;
   box.classList.remove('has');
@@ -444,7 +526,7 @@ function renderSearch(q) {
     const img = document.createElement('img');
     img.className = 'sr-cover';
     img.alt = '';
-    img.src = '/api/cover/' + encodeURI(it.id);
+    img.src = api('/api/cover/' + encodeURI(it.id));
     img.addEventListener('error', () => img.remove());
     const tx = document.createElement('div');
     tx.className = 'sr-text';
@@ -1137,16 +1219,24 @@ function bindEvents() {
     e.currentTarget.classList.toggle('on', showLabels);
     labelsEl.style.display = showLabels ? '' : 'none';
   });
+  const ncClose = $('nc-close');
+  if (ncClose) ncClose.addEventListener('click', closeNcSetup);
+  const ncScrim = $('nc-scrim');
+  if (ncScrim) ncScrim.addEventListener('click', closeNcSetup);
+  const ncSave = $('nc-save');
+  if (ncSave) ncSave.addEventListener('click', saveNcSetup);
+  const btnMusic = $('btn-music');
+  if (btnMusic) btnMusic.addEventListener('click', openNcSetup);
   $('btn-scan').addEventListener('click', async (e) => {
     e.currentTarget.disabled = true;
     toast('Scan gestartet …');
-    await fetch('/api/scan', { method: 'POST' });
+    await fetch(api('/api/scan'), { method: 'POST' });
     loadStatusAndPoll();
   });
   $('btn-landscape').addEventListener('click', async (e) => {
     e.currentTarget.disabled = true;
     toast('Berechne Landschaft …');
-    await fetch('/api/landscape', { method: 'POST' });
+    await fetch(api('/api/landscape'), { method: 'POST' });
     pollWhile(1600, async (s) => {
       if (!s.landscape_running) {
         await loadMap();
@@ -1310,7 +1400,7 @@ function selectItem(it, autoplay, auto = false) {
   lyricManualUntil = 0;
   startag.classList.add('show');
 
-  fetch('/api/lyrics/' + encodeURI(it.id))
+  fetch(api('/api/lyrics/' + encodeURI(it.id)))
     .then((r) => r.json())
     .then((d) => renderLyrics(it.id, d.lyrics || '', d.synced || []))
     .catch(() => {});
@@ -1334,14 +1424,14 @@ function selectItem(it, autoplay, auto = false) {
   const g = $('d-genre');
   if (it.genre) { g.style.display = ''; g.textContent = it.genre; } else { g.style.display = 'none'; }
 
-  audioEl.src = '/api/audio/' + encodeURI(it.id);
+  audioEl.src = api('/api/audio/' + encodeURI(it.id));
   if (autoplay) {
     ensureAudio();
     const p = audioEl.play();
     if (p && p.catch) p.catch(() => {});
   }
 
-  fetch('/api/track/' + encodeURI(it.id))
+  fetch(api('/api/track/' + encodeURI(it.id)))
     .then((r) => r.json())
     .then((tr) => {
       if (tr.path !== it.id) return;
@@ -1433,7 +1523,7 @@ async function loadSimilar(id, keepPlaylist = false) {
   if (titleEl) titleEl.textContent = 'Ähnlich';
   box.innerHTML = '<div class="empty">Suche …</div>';
   try {
-    const data = await fetch('/api/similar/' + encodeURI(id) + '?limit=8').then((r) => r.json());
+    const data = await fetch(api('/api/similar/' + encodeURI(id) + '?limit=8')).then((r) => r.json());
     const list = data.similar || [];
     similarResults = list;
     if (!keepPlaylist) {
@@ -1468,7 +1558,7 @@ function renderPlaylistPanel(entries, heading, mode) {
     img.alt = '';
     img.onload = () => { img.classList.add('has'); el.classList.add('hascov'); };
     img.onerror = () => img.remove();
-    img.src = '/api/cover/' + encodeURI(s.id);
+    img.src = api('/api/cover/' + encodeURI(s.id));
 
     const isColl = mode === 'collection';
     const main = isColl ? (s.title || s.name) : s.name;
@@ -1534,7 +1624,7 @@ function renderLegend() {
 /* ================= Daten ================= */
 async function loadMap() {
   try {
-    const data = await fetch('/api/map').then((r) => r.json());
+    const data = await fetch(api('/api/map')).then((r) => r.json());
     items = data.items || [];
     clusters = data.clusters || [];
     byId = new Map(items.map((i) => [i.id, i]));
@@ -1559,7 +1649,7 @@ async function loadMap() {
 
 async function refreshStatus() {
   try {
-    const s = await fetch('/api/status').then((r) => r.json());
+    const s = await fetch(api('/api/status')).then((r) => r.json());
     if (s.landscape_running) {
       statusEl.textContent = 'Berechne Landschaft …';
       statusEl.style.color = '#c9a4ff';
@@ -1613,7 +1703,7 @@ async function openPaths() {
   scrim.classList.add('show');
   pathList.innerHTML = '<div class="empty">Lade Pfade …</div>';
   try {
-    const data = await fetch('/api/paths').then((r) => r.json());
+    const data = await fetch(api('/api/paths')).then((r) => r.json());
     $('root-input').value = data.root || '';
     const selected = new Set(data.selected || []);
     const all = selected.size === 0;
@@ -1657,7 +1747,7 @@ async function applyRoot(e) {
   const btn = e.currentTarget;
   btn.disabled = true;
   try {
-    const res = await fetch('/api/root', {
+    const res = await fetch(api('/api/root'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ root })
@@ -1685,7 +1775,7 @@ async function applyPaths(e) {
   e.currentTarget.disabled = true;
   const all = names.length === boxes.length;
   try {
-    const res = await fetch('/api/selection', {
+    const res = await fetch(api('/api/selection'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ paths: all ? [] : names })
@@ -1851,6 +1941,7 @@ function frame() {
 
 /* ================= Start ================= */
 init();
+initServerFeatures();
 loadMap();
 refreshStatus().then((s) => {
   if (s && (s.running || s.landscape_running)) {

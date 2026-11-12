@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<info>
+	<id>acousticgalaxy</id>
+	<name>AcousticGalaxy</name>
+	<summary>Deine Nextcloud-Musik als interaktive 3D-Galaxie</summary>
+	<description>
+	<![CDATA[Stellt die Titel der Nextcloud Music-App als 3D-Sternenkarte dar.
+Ähnliche Stücke bilden Regionen, die nach ihren prägenden Interpreten benannt
+sind. Favoriten (Starred) aus der Music-App werden als Fixsterne angezeigt.]]>
+	</description>
+	<version>0.1.0</version>
+	<licence>MIT</licence>
+	<author mail="133503283+Henrik-Aalto@users.noreply.github.com" homepage="https://github.com/Henrik-Aalto">Henrik-Aalto</author>
+	<namespace>AcousticGalaxy</namespace>
+	<category>multimedia</category>
+	<website>https://github.com/Henrik-Aalto/AcousticGalaxyM16-3</website>
+	<bugs>https://github.com/Henrik-Aalto/AcousticGalaxyM16-3/issues</bugs>
+	<repository type="git">https://github.com/Henrik-Aalto/AcousticGalaxyM16-3</repository>
+	<dependencies>
+		<nextcloud min-version="31" max-version="36"/>
+	</dependencies>
+	<external-app>
+		<docker-install>
+			<registry>ghcr.io</registry>
+			<image>henrik-aalto/acousticgalaxy</image>
+			<image-tag>0.1.0</image-tag>
+		</docker-install>
+		<environment-variables>
+			<variable>
+				<name>ACOUSTIC_MUSIC_APIKEY</name>
+				<display-name>Music-API-Key (optional)</display-name>
+				<description>Globaler Fallback für Einzelbenutzer-Instanzen. Normalerweise wird der Key pro Benutzer in der App hinterlegt.</description>
+			</variable>
+			<variable>
+				<name>ACOUSTIC_STATIC_DIR</name>
+				<display-name>Frontend-Verzeichnis</display-name>
+				<description>Pfad zum Frontend im Container.</description>
+				<default>/ex_app/static</default>
+			</variable>
+		</environment-variables>
+		<routes>
+			<route>
+				<url>^/$</url>
+				<verb>GET</verb>
+				<access_level>USER</access_level>
+			</route>
+			<route>
+				<url>^/app\.js.*$</url>
+				<verb>GET</verb>
+				<access_level>USER</access_level>
+			</route>
+			<route>
+				<url>^/style\.css.*$</url>
+				<verb>GET</verb>
+				<access_level>USER</access_level>
+			</route>
+			<route>
+				<url>^/vendor/.*$</url>
+				<verb>GET</verb>
+				<access_level>USER</access_level>
+			</route>
+			<route>
+				<url>^/api/.*$</url>
+				<verb>GET</verb>
+				<access_level>USER</access_level>
+			</route>
+			<route>
+				<url>^/api/.*$</url>
+				<verb>POST</verb>
+				<access_level>USER</access_level>
+			</route>
+		</routes>
+	</external-app>
+</info>
